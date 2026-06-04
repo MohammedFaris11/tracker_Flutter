@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "902299834871",
+    "project_id": "trackerflutter-aca46",
+    "storage_bucket": "trackerflutter-aca46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:902299834871:android:751c88c712f2efc3a476f2",
+        "android_client_info": {
+          "package_name": "com.example.fuel_track"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARtXbwtVnmiETlk930LqX7fjCcmXyDG8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

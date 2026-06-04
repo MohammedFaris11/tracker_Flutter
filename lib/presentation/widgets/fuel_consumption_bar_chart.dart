@@ -13,20 +13,69 @@ class FuelConsumptionBarChart extends StatelessWidget {
     }
 
     final entries = data.entries.toList();
+    final maxValue = data.values.isEmpty ? 0.0 : data.values.reduce((a, b) => a > b ? a : b);
+    
+    double interval = 1.0;
+    double maxY = 10.0;
+    
+    if (maxValue <= 0) {
+      interval = 2.0;
+      maxY = 10.0;
+    } else if (maxValue < 1.0) {
+      interval = 0.2;
+      maxY = 1.0;
+    } else {
+      final steps = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0];
+      if (maxValue > 50000) {
+        interval = (maxValue / 5).ceilToDouble();
+      } else {
+        for (final step in steps) {
+          if (step * 5 >= maxValue) {
+            interval = step;
+            break;
+          }
+        }
+      }
+      final calculatedMaxY = (maxValue / interval).ceil() * interval;
+      if (calculatedMaxY == maxValue) {
+        maxY = calculatedMaxY + interval;
+      } else {
+        maxY = calculatedMaxY;
+      }
+    }
 
     return AspectRatio(
       aspectRatio: 1.7,
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: data.values.isEmpty ? 10 : data.values.reduce((a, b) => a > b ? a : b) * 1.2,
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: interval,
+            getDrawingHorizontalLine: (value) => FlLine(
+              color: Colors.blueGrey.withValues(alpha: 0.15),
+              strokeWidth: 1,
+              dashArray: [5, 5],
+            ),
+          ),
           barGroups: List.generate(entries.length, (index) {
+            final colors = [
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.secondary,
+              const Color(0xFFF59E0B), // Amber
+              const Color(0xFFF43F5E), // Rose
+              const Color(0xFF8B5CF6), // Violet
+              const Color(0xFF0EA5E9), // Light Blue
+              const Color(0xFF10B981), // Emerald
+            ];
             return BarChartGroupData(
               x: index,
               barRods: [
                 BarChartRodData(
                   toY: entries[index].value,
-                  color: Colors.blueAccent,
+                  color: colors[index % colors.length],
                   width: 16,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                 ),
@@ -34,7 +83,23 @@ class FuelConsumptionBarChart extends StatelessWidget {
             );
           }),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                interval: interval,
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Text(
+                      value.toInt().toString(),
+                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      textAlign: TextAlign.right,
+                    ),
+                  );
+                },
+              ),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -60,3 +125,4 @@ class FuelConsumptionBarChart extends StatelessWidget {
     );
   }
 }
+

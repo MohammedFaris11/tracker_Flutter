@@ -12,30 +12,44 @@ class ExpensesPieChart extends StatelessWidget {
       return const Center(child: Text('Aucune donnée de dépense'));
     }
 
+    final sections = <PieChartSectionData>[];
+    
+    final gasoilValue = data['gasoil'] ?? 0;
+    if (gasoilValue > 0) {
+      sections.add(
+        PieChartSectionData(
+          color: Theme.of(context).colorScheme.primary,
+          value: gasoilValue,
+          title: 'Gasoil\n${gasoilValue.toStringAsFixed(0)} €',
+          radius: 65,
+          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+      );
+    }
+
+    final maintenanceValue = data['maintenance'] ?? 0;
+    if (maintenanceValue > 0) {
+      sections.add(
+        PieChartSectionData(
+          color: Theme.of(context).colorScheme.secondary,
+          value: maintenanceValue,
+          title: 'Maint.\n${maintenanceValue.toStringAsFixed(0)} €',
+          radius: 65,
+          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+      );
+    }
+
     return AspectRatio(
       aspectRatio: 1.3,
       child: PieChart(
         PieChartData(
           sectionsSpace: 0,
           centerSpaceRadius: 40,
-          sections: [
-            PieChartSectionData(
-              color: Colors.blue,
-              value: data['gasoil'] ?? 0,
-              title: 'Gasoil\n${(data['gasoil'] ?? 0).toStringAsFixed(0)} €',
-              radius: 65,
-              titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-            ),
-            PieChartSectionData(
-              color: Colors.orange,
-              value: data['maintenance'] ?? 0,
-              title: 'Maint.\n${(data['maintenance'] ?? 0).toStringAsFixed(0)} €',
-              radius: 65,
-              titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-            ),
-          ],
+          sections: sections,
         ),
       ),
     );
   }
 }
+

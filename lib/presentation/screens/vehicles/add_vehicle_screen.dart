@@ -27,7 +27,7 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
     super.dispose();
   }
 
-  void _submit() async {
+  void _submit() {
     if (_formKey.currentState!.validate()) {
       final userId = ref.read(userIdProvider);
       final vehicle = VehicleModel(
@@ -38,8 +38,15 @@ class _AddVehicleScreenState extends ConsumerState<AddVehicleScreen> {
         userId: userId!,
       );
 
-      await ref.read(vehicleRepositoryProvider).addVehicle(vehicle);
-      if (mounted) context.pop();
+      // Fire and forget, no await, so it doesn't freeze the UI if offline
+      ref.read(vehicleRepositoryProvider).addVehicle(vehicle);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Véhicule enregistré !'), backgroundColor: Colors.green),
+        );
+        context.pop();
+      }
     }
   }
 

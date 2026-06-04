@@ -20,6 +20,19 @@ class _AddFuelEntryScreenState extends ConsumerState<AddFuelEntryScreen> {
   final _litersController = TextEditingController();
   final _amountController = TextEditingController();
   VehicleModel? _selectedVehicle;
+  DateTime _selectedDate = DateTime.now();
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
 
   @override
   void dispose() {
@@ -28,7 +41,7 @@ class _AddFuelEntryScreenState extends ConsumerState<AddFuelEntryScreen> {
     super.dispose();
   }
 
-  void _submit() async {
+  void _submit() {
     if (_formKey.currentState!.validate() && _selectedVehicle != null) {
       final userId = ref.read(userIdProvider);
       final entry = FuelEntryModel(
@@ -37,12 +50,19 @@ class _AddFuelEntryScreenState extends ConsumerState<AddFuelEntryScreen> {
         vehicleName: _selectedVehicle!.name,
         liters: double.parse(_litersController.text),
         amount: double.parse(_amountController.text),
-        date: DateTime.now(),
+        date: _selectedDate,
         userId: userId!,
       );
 
-      await ref.read(fuelEntryRepositoryProvider).addFuelEntry(entry);
-      if (mounted) context.pop();
+      // Fire and forget
+      ref.read(fuelEntryRepositoryProvider).addFuelEntry(entry);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Plein enregistré !'), backgroundColor: Colors.green),
+        );
+        context.pop();
+      }
     }
   }
 
@@ -82,6 +102,19 @@ class _AddFuelEntryScreenState extends ConsumerState<AddFuelEntryScreen> {
                   decoration: const InputDecoration(labelText: 'Montant', suffixText: '€'),
                   keyboardType: TextInputType.number,
                   validator: (v) => v?.isEmpty ?? true ? 'Champ requis' : null,
+                ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: _pickDate,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Date',
+                      prefixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      "${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}",
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(

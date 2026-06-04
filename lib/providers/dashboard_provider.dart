@@ -10,15 +10,28 @@ import 'maintenance_provider.dart';
 final selectedVehicleIdProvider = StateProvider<String?>((ref) => null);
 final dateRangeProvider = StateProvider<DateTimeRange?>((ref) => null);
 
+final selectedMonthProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month);
+});
+
 final expensesByTypeProvider = Provider<Map<String, double>>((ref) {
+  final selectedMonth = ref.watch(selectedMonthProvider);
   final fuel = ref.watch(fuelEntriesProvider).value ?? [];
   final maint = ref.watch(maintenancesProvider).value ?? [];
-  return GetExpensesByTypeUseCase().call(fuel, maint);
+  
+  final filteredFuel = fuel.where((e) => e.date.year == selectedMonth.year && e.date.month == selectedMonth.month).toList();
+  final filteredMaint = maint.where((e) => e.date.year == selectedMonth.year && e.date.month == selectedMonth.month).toList();
+  
+  return GetExpensesByTypeUseCase().call(filteredFuel, filteredMaint);
 });
 
 final fuelConsumptionByVehicleProvider = Provider<Map<String, double>>((ref) {
+  final selectedMonth = ref.watch(selectedMonthProvider);
   final entries = ref.watch(fuelEntriesProvider).value ?? [];
-  return GetFuelConsumptionByVehicleUseCase().call(entries);
+  
+  final filteredEntries = entries.where((e) => e.date.year == selectedMonth.year && e.date.month == selectedMonth.month).toList();
+  return GetFuelConsumptionByVehicleUseCase().call(filteredEntries);
 });
 
 final filteredMaintenancesProvider = Provider<List<MaintenanceModel>>((ref) {

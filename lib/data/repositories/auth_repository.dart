@@ -27,6 +27,19 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
+  Future<bool> register(String email, String password) async {
+    try {
+      await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
   Future<void> logout() async {
     await _firebaseAuth.signOut();
   }

@@ -18,6 +18,8 @@ class DashboardScreen extends ConsumerWidget {
     final expenses = ref.watch(expensesByTypeProvider);
     final consumption = ref.watch(fuelConsumptionByVehicleProvider);
 
+    final totalExpenses = expenses.values.fold<double>(0, (sum, val) => sum + val);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('FuelTrack Dashboard'),
@@ -111,41 +113,106 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text('Dépenses', style: Theme.of(context).textTheme.titleMedium),
-                      ExpensesPieChart(data: expenses),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text('Consommation (L)', style: Theme.of(context).textTheme.titleMedium),
-                      FuelConsumptionBarChart(data: consumption),
-                    ],
-                  ),
+                Text('Statistiques', style: Theme.of(context).textTheme.titleLarge),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () {
+                        final current = ref.read(selectedMonthProvider);
+                        ref.read(selectedMonthProvider.notifier).state = DateTime(current.year, current.month - 1);
+                      },
+                    ),
+                    Text(
+                      "${_getMonthName(ref.watch(selectedMonthProvider).month)} ${ref.watch(selectedMonthProvider).year}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () {
+                        final current = ref.read(selectedMonthProvider);
+                        ref.read(selectedMonthProvider.notifier).state = DateTime(current.year, current.month + 1);
+                      },
+                    ),
+                  ],
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            Card(
+              color: Theme.of(context).colorScheme.primary,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Total des dépenses',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${totalExpenses.toStringAsFixed(2)} €',
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text('Dépenses par catégorie', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 16),
+                    ExpensesPieChart(data: expenses),
+                  ],
+                ),
+              ),
+            ),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text('Consommation par véhicule (L)', style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 16),
+                    FuelConsumptionBarChart(data: consumption),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () => context.push(AppRoutes.addFuelEntry),
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.local_gas_station),
               label: const Text('Ajouter un plein'),
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () => context.push(AppRoutes.addMaintenance),
-              icon: const Icon(Icons.add_road),
+              icon: const Icon(Icons.build),
               label: const Text('Ajouter une maintenance'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade50, foregroundColor: Colors.orange),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+                foregroundColor: Theme.of(context).colorScheme.secondary,
+                elevation: 0,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+    ];
+    return months[month - 1];
   }
 }

@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController(text: AppConstants.demoPassword);
   bool _isLoading = false;
   String? _error;
+  bool _isLogin = true;
 
   @override
   void dispose() {
@@ -23,24 +24,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _submit() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
-    final success = await ref.read(authRepositoryProvider).login(
-          _emailController.text,
-          _passwordController.text,
-        );
+    final repo = ref.read(authRepositoryProvider);
+    bool success;
+    
+    if (_isLogin) {
+      success = await repo.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+    } else {
+      success = await repo.register(
+        _emailController.text,
+        _passwordController.text,
+      );
+    }
 
     if (!mounted) return;
 
     setState(() => _isLoading = false);
 
     if (!success) {
-      setState(() => _error = 'Identifiants invalides');
+      setState(() => _error = _isLogin ? 'Identifiants invalides' : 'Erreur lors de la création du compte');
     }
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _isLogin = !_isLogin;
+      _error = null;
+      if (!_isLogin) {
+        _emailController.clear();
+        _passwordController.clear();
+      } else {
+        _emailController.text = AppConstants.demoEmail;
+        _passwordController.text = AppConstants.demoPassword;
+      }
+    });
   }
 
   @override
@@ -53,17 +78,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.local_gas_station, size: 80, color: Colors.blue),
+              Icon(Icons.local_gas_station, size: 80, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 24),
               Text(
                 'FuelTrack',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
               ),
               const SizedBox(height: 48),
+              Text(
+                _isLogin ? 'Connexion' : 'Créer un compte',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 24),
               TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -91,17 +122,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ],
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _isLoading ? null : _login,
+                onPressed: _isLoading ? null : _submit,
                 child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Se connecter'),
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text(_isLogin ? 'Se connecter' : 'S\'inscrire'),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Utilisez les identifiants de démo pour tester',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+              TextButton(
+                onPressed: _toggleMode,
+                child: Text(_isLogin ? 'Pas de compte ? S\'inscrire' : 'Déjà un compte ? Se connecter'),
               ),
+              if (_isLogin) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Utilisez les identifiants de démo pour tester',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ]
             ],
           ),
         ),

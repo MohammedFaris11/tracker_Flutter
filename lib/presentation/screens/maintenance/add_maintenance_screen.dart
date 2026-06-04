@@ -22,6 +22,19 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
   final _descriptionController = TextEditingController();
   VehicleModel? _selectedVehicle;
   MaintenanceCategoryModel? _selectedCategory;
+  DateTime _selectedDate = DateTime.now();
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
 
   @override
   void dispose() {
@@ -30,8 +43,10 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
     super.dispose();
   }
 
-  void _submit() async {
-    if (_formKey.currentState!.validate() && _selectedVehicle != null && _selectedCategory != null) {
+  void _submit() {
+    if (_formKey.currentState!.validate() &&
+        _selectedVehicle != null &&
+        _selectedCategory != null) {
       final userId = ref.read(userIdProvider);
       final maintenance = MaintenanceModel(
         id: const Uuid().v4(),
@@ -41,12 +56,19 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
         categoryName: _selectedCategory!.name,
         description: _descriptionController.text,
         amount: double.parse(_amountController.text),
-        date: DateTime.now(),
+        date: _selectedDate,
         userId: userId!,
       );
 
-      await ref.read(maintenanceRepositoryProvider).addMaintenance(maintenance);
-      if (mounted) context.pop();
+      // Fire and forget
+      ref.read(maintenanceRepositoryProvider).addMaintenance(maintenance);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Maintenance enregistrée !'), backgroundColor: Colors.green),
+        );
+        context.pop();
+      }
     }
   }
 
@@ -95,6 +117,19 @@ class _AddMaintenanceScreenState extends ConsumerState<AddMaintenanceScreen> {
                     controller: _descriptionController,
                     decoration: const InputDecoration(labelText: 'Description (Optionnel)'),
                     maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: _pickDate,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date',
+                        prefixIcon: Icon(Icons.calendar_today),
+                      ),
+                      child: Text(
+                        "${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}",
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
